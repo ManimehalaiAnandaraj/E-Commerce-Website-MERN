@@ -11,10 +11,11 @@ const app = express();
 
 // ✅ CORS setup for deployed frontend
 const corsOptions = {
-  origin: process.env.FRONTEND_URL,
+  origin: "https://e-commerce-website-mern-chi.vercel.app", // or whichever your Vercel frontend domain is
   credentials: true,
 };
 app.use(cors(corsOptions));
+
 
 app.use(express.json());
 
