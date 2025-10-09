@@ -1,14 +1,11 @@
-const express = require("express");
+import express from "express";
+import { getCart, addToCart, removeFromCart } from "../controllers/cartController.js";
+import { verifyToken } from "../middleware/verifyToken.js";
+
 const router = express.Router();
-const cartController = require("../controllers/cartController");
 
-// Get cart items
-router.get("/", cartController.getCart);
+router.get("/", verifyToken, getCart);
+router.post("/", verifyToken, addToCart);
+router.delete("/", verifyToken, removeFromCart);
 
-// Add item to cart
-router.post("/", cartController.addToCart);
-
-// Remove item from cart
-router.delete("/:id", cartController.removeFromCart);
-
-module.exports = router;
+export default router;

@@ -1,36 +1,43 @@
-const express = require("express");
-const cors = require("cors");
-const mongoose = require("mongoose");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+import productRoutes from "./routes/products.js";
+import authRoutes from "./routes/auth.js";
+
+dotenv.config();
 
 const app = express();
 
-// ✅ Correct CORS setup
-const corsOptions = {
-  origin: [
-    "https://e-commerce-website-mern-chi.vercel.app", // your frontend
-    "http://localhost:3000" // optional for local testing
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-};
-app.use(cors(corsOptions));
+// ✅ Body parser
 app.use(express.json());
 
-// ✅ Routes
-const authRoutes = require("./routes/authRoutes");
-const productRoutes = require("./routes/productRoutes");
-const cartRoutes = require("./routes/cartRoutes");
+// ✅ CORS setup
+const allowedOrigins = [
+  "https://e-commerce-website-mern-q97vrspgt-manimehalais-projects.vercel.app", // your deployed frontend
+  "https://e-commerce-website-mern-chi.vercel.app" // optional alternate domain
+];
 
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true); // allow Postman or server-to-server
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error(`CORS blocked for origin: ${origin}`), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/cart", cartRoutes);
 
-// ✅ MongoDB Connection
+// ✅ MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.log(err));
+  .catch(err => console.log("❌ MongoDB connection error:", err));
 
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

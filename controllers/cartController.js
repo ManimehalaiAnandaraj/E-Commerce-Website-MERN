@@ -1,41 +1,41 @@
-const Cart = require("../models/Cart");
+import Cart from "../models/Cart.js";
+import Product from "../models/Product.js";
 
-// GET all cart items for a user
-exports.getCart = async (req, res) => {
+export const getCart = async (req, res) => {
   try {
-    const { userId } = req.query;
-    if (!userId) return res.status(400).json({ message: "User ID is required" });
-
-    const cartItems = await Cart.find({ userId }).populate("productId");
-    res.json(cartItems);
+    const cart = await Cart.findOne({ user: req.user.id }).populate("products.product");
+    res.json(cart || { products: [] });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// ADD product to cart
-exports.addToCart = async (req, res) => {
+export const addToCart = async (req, res) => {
+  const { product, quantity } = req.body;
   try {
-    const { userId, productId } = req.body;
-    if (!userId || !productId)
-      return res.status(400).json({ message: "User ID and Product ID are required" });
+    let cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) cart = await Cart.create({ user: req.user.id, products: [] });
 
-    const cartItem = new Cart({ userId, productId });
-    await cartItem.save();
-    res.status(201).json(cartItem);
+    const existing = cart.products.find((p) => p.product.toString() === product);
+    if (existing) existing.quantity += quantity;
+    else cart.products.push({ product, quantity });
+
+    await cart.save();
+    res.json(cart);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-// REMOVE product from cart
-exports.removeFromCart = async (req, res) => {
+export const removeFromCart = async (req, res) => {
+  const { product } = req.body;
   try {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ message: "Cart item ID is required" });
+    const cart = await Cart.findOne({ user: req.user.id });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
 
-    await Cart.findByIdAndDelete(id);
-    res.json({ message: "Item removed from cart" });
+    cart.products = cart.products.filter((p) => p.product.toString() !== product);
+    await cart.save();
+    res.json(cart);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
